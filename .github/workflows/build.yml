@@ -1,0 +1,29 @@
+# Builds official Telegram Android (DrKLO/Telegram) with the glass-bar opacity patched.
+# Secrets TG_API_ID and TG_API_HASH are optional (empty = keep the defaults in the repo).
+name: build-telegram-glass
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: { repository: DrKLO/Telegram, path: tg }
+      - uses: actions/checkout@v4
+        with: { path: mine }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: android-actions/setup-android@v3
+      - name: SDK/NDK
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;21.4.7075529" "cmake;3.10.2.4988404"
+      - name: Patch
+        run: python3 mine/patch.py tg "${{ secrets.TG_API_ID }}" "${{ secrets.TG_API_HASH }}"   # secrets optional: empty = keep repo defaults
+      - name: Build
+        working-directory: tg
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          ./gradlew --no-daemon :TMessagesProj_App:assembleAfatDebug -x lint
+      - uses: actions/upload-artifact@v4
+        with: { name: telegram-glass-apk, path: "tg/TMessagesProj_App/build/outputs/apk/**/*.apk" }
