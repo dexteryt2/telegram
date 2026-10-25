@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-        with: { repository: DrKLO/Telegram, path: tg }
+        with: { repository: DrKLO/Telegram, path: tg, submodules: recursive }
       - uses: actions/checkout@v4
         with: { path: mine }
       - uses: actions/setup-java@v4
